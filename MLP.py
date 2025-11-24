@@ -306,7 +306,7 @@ class MLP:
                 x = x.reshape(1, -1)
                 y = y.reshape(1, -1)
 
-                y_pred = self.forward(x)
+                y_pred = self.forward(x, grad=False)
                 loss_sum += self.loss_fn.loss(y_pred, y)
                 return loss_sum/len(X)
         
