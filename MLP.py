@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 import time
 
 GLOBAL_SEED = 24
@@ -200,14 +200,17 @@ class MLP:
                 
     def forward(self, x, grad=False):
         out = x
-        self.z = []  # pre-activation outputs
-        self.a = [x]  # post-activation outputs, starting with input
+        if grad:
+            self.z = []  # pre-activation outputs
+            self.a = [x]  # post-activation outputs, starting with input
 
         for layer in self.layers:
             z = layer.forward(out)
-            self.z.append(z)
             out = layer.activation.activate(z)
-            self.a.append(out)
+            
+            if grad:
+                self.z.append(z)
+                self.a.append(out)
         return out
 
 
@@ -273,7 +276,7 @@ class MLP:
         if shuffle:
             X, Y = shuffle_data(X, Y)
         
-        for epoch in tqdm(range(epochs), desc="Training Progress", unit="epoch"):  # Loop over epochs with tqdm
+        for epoch in tqdm(range(epochs), desc="Training", unit='Epoch'):  # Loop over epochs
             epoch_loss = 0
             
             for start in range(0, N, batch_size):  # Loop over batches
@@ -290,9 +293,9 @@ class MLP:
                 self.test_loss_list.append(test_loss)
             
             if (epoch + 1) % print_interval == 0:
-                print(f"Epoch {epoch+1:4},   Train Loss: {train_loss:6f}", end='')
+                print(f"Epoch {epoch+1:4} / {epochs:4},   Train Loss: {train_loss:8f}", end='')
                 if test_model:
-                    print(f",   Test Loss: {test_loss:6f}", end='')
+                    print(f",   Test Loss: {test_loss:8f}", end='')
                 print()
     
         end_time = time.time()  # End timing the training process
@@ -308,7 +311,7 @@ class MLP:
 
                 y_pred = self.forward(x, grad=False)
                 loss_sum += self.loss_fn.loss(y_pred, y)
-                return loss_sum/len(X)
+            return loss_sum/len(X)
         
 
 
@@ -328,7 +331,7 @@ class MLP:
         )
 
 
-def plot_metric_over_epoch(train_metric_list, test_metric_list=None, y_label="Mean Loss", figure_size=(8, 5)):
+def plot_metric_over_epoch(train_metric_list, test_metric_list=None, title="", y_label="Mean Loss", figure_size=(8, 5)):
     plt.figure(figsize=figure_size)
 
     epochs = np.arange(1, len(train_metric_list) + 1)
@@ -338,11 +341,33 @@ def plot_metric_over_epoch(train_metric_list, test_metric_list=None, y_label="Me
 
     plt.xlabel('Epoch')
     plt.ylabel(y_label)
-    plt.title(f"{y_label} over Epochs")
+    plt.title(title)
     plt.grid(True, linestyle="--", alpha=0.4)
     plt.legend()
     # plt.tight_layout()
     plt.show()
+
+
+def plot_train_metrics(metric_lists, labels=None, title="", y_label="Mean Loss", figure_size=(8, 5)):
+
+    plt.figure(figsize=figure_size)
+    
+    num_curves = len(metric_lists)
+    colors = plt.cm.tab10(np.linspace(0, 1, num_curves))  # distinct colors
+
+    for i, error_rates in enumerate(metric_lists):
+        epochs = np.arange(1, len(error_rates) + 1)
+        label = labels[i] if labels and i < len(labels) else f"Run {i+1}"
+        plt.plot(epochs, error_rates, color=colors[i], label=label)
+
+    plt.xlabel('Epoch')
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.grid(True, linestyle="--", alpha=0.4)
+    plt.legend()
+    # plt.tight_layout()
+    plt.show()
+
 
 
 def calculate_psnr(image1, image2):
