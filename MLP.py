@@ -16,29 +16,6 @@ def shuffle_data(arr1, arr2):
     return arr1[permutation], arr2[permutation]
 
 
-def calculate_psnr(image1, image2):
-    """
-    Calculate the PSNR (Peak Signal-to-Noise Ratio) between two grayscale images.
-
-    Parameters:
-        image1 (numpy.ndarray): First image with values in [0, 1].
-        image2 (numpy.ndarray): Second image with values in [0, 1].
-
-    Returns:
-        float: PSNR value in decibels (dB).
-    """
-    if image1.shape != image2.shape:
-        raise ValueError("Input images must have the same dimensions.")
-    
-    mse = np.mean((image1 - image2) ** 2)
-    if mse == 0:
-        return float('inf')  # PSNR is infinite if images are identical
-    
-    max_pixel_value = 1.0  # Since the images are in [0, 1]
-    psnr = 20 * np.log10(max_pixel_value / np.sqrt(mse))
-    return psnr
-
-
 DEFAULT_WEIGHT_TYPE = 'xavier'
 weight_methods = {'zero', 'uniform', 'normal', 'xavier', 'xavier-uniform',
                   'kaiming', 'kaiming-uniform'}
@@ -103,7 +80,24 @@ class ReLU:
     
     def derivative(self, x):
         return (x > 0).astype(float)
+    
+class LeakyReLU:
+    def __init__(self, alpha = 0.01):
+        self.alpha = alpha
+        
+    def activate(self, x):
+        return np.where(x > 0, x, self.alpha * x)
 
+    def derivative(self, x):
+        return np.where(x > 0, 1, self.alpha)
+
+class Linear:
+    def activate(self, x):
+        return x
+
+    def derivative(self, x):
+        return np.ones_like(x)
+    
 class Sigmoid:
     def activate(self, x):
         return 1 / (1 + np.exp(-x))
@@ -112,13 +106,6 @@ class Sigmoid:
         s = self.activate(x)
         return s * (1 - s)
     
-class Linear:
-    def activate(self, x):
-        return x
-
-    def derivative(self, x):
-        return np.ones_like(x)
-
 class Tanh:
     def activate(self, x):
         return np.tanh(x)
@@ -209,7 +196,7 @@ class MLP:
         self.test_loss_list = []
     
                 
-    def forward(self, x):
+    def forward(self, x, grad=False):
         out = x
         self.z = []  # pre-activation outputs
         self.a = [x]  # post-activation outputs, starting with input
@@ -235,7 +222,7 @@ class MLP:
             x = x.reshape(1, -1)
             y = y.reshape(1, -1)
 
-            y_pred = self.forward(x)
+            y_pred = self.forward(x, grad=True)
             batch_loss += self.loss_fn.loss(y_pred, y)
 
             deltas = [None] * len(self.layers)
@@ -306,16 +293,23 @@ class MLP:
                 print()
     
 
-    def test(self, X, Y):
-            loss_sum = 0
+    def test(self, X, Y, PSNR=False):
+            loss_sum, PSNR_sum = 0, 0
             for x, y in zip(X, Y):
                 x = x.reshape(1, -1)
                 y = y.reshape(1, -1)
 
                 y_pred = self.forward(x)
                 loss_sum += self.loss_fn.loss(y_pred, y)
+                
+                if PSNR:
+                    PSNR_sum += calculate_psnr(y, y_pred)
             
-            return loss_sum/len(X)
+            if PSNR:
+                return (loss_sum/len(X), PSNR_sum/len(X))
+            else:
+                return loss_sum/len(X)
+        
 
 
     def __str__(self):
@@ -350,3 +344,26 @@ def plot_metric_over_epoch(train_metric_list, test_metric_list=None, y_label="Me
     plt.legend()
     # plt.tight_layout()
     plt.show()
+
+
+def calculate_psnr(image1, image2):
+    """
+    Calculate the PSNR (Peak Signal-to-Noise Ratio) between two grayscale images.
+
+    Parameters:
+        image1 (numpy.ndarray): First image with values in [0, 1].
+        image2 (numpy.ndarray): Second image with values in [0, 1].
+
+    Returns:
+        float: PSNR value in decibels (dB).
+    """
+    if image1.shape != image2.shape:
+        raise ValueError("Input images must have the same dimensions.")
+    
+    mse = np.mean((image1 - image2) ** 2)
+    if mse == 0:
+        return float('inf')  # PSNR is infinite if images are identical
+    
+    max_pixel_value = 1.0  # Since the images are in [0, 1]
+    psnr = 20 * np.log10(max_pixel_value / np.sqrt(mse))
+    return psnr
