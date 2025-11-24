@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
+import time
 
 GLOBAL_SEED = 24
 
@@ -177,7 +179,7 @@ class LinearLayer:
 # MLP with Delta-Based Backprop
 # -------------------------
 class MLP:
-    def __init__(self, layer_sizes, activations, existing_layers=[], loss="mse", lr=0.01, momentum=0, weight_type="xavier"):
+    def __init__(self, layer_sizes, activations, existing_layers=[], loss="mse", lr=0.01, momentum=0.0, weight_type="xavier"):
         self.layers = existing_layers  # for transfer learning or continuing training from existing layers
         
         self.lr = lr
@@ -263,14 +265,15 @@ class MLP:
 
 
     def train(self, X, Y, epochs=10, print_interval=2, batch_size=1, shuffle=False,
-              test_model=False, X_test=None, Y_test=None, PSNR=False):
+              test_model=False, X_test=None, Y_test=None):
         
+        start_time = time.time()  # Start timing the training process
         N = len(X)
         
         if shuffle:
             X, Y = shuffle_data(X, Y)
         
-        for epoch in range(epochs):  # Loop over epochs
+        for epoch in tqdm(range(epochs), desc="Training Progress", unit="epoch"):  # Loop over epochs with tqdm
             epoch_loss = 0
             
             for start in range(0, N, batch_size):  # Loop over batches
@@ -279,7 +282,7 @@ class MLP:
                 Y_batch = Y[start:end]                   
                 epoch_loss += self.backward(X_batch, Y_batch)  # find gradients after each batch and update weights
 
-            train_loss = epoch_loss/N
+            train_loss = epoch_loss / N
             self.train_loss_list.append(train_loss)
             
             if test_model:
@@ -292,22 +295,19 @@ class MLP:
                     print(f",   Test Loss: {test_loss:6f}", end='')
                 print()
     
+        end_time = time.time()  # End timing the training process
+        total_time = end_time - start_time
+        print(f"Training completed in {total_time:.2f} seconds.")
 
-    def test(self, X, Y, PSNR=False):
-            loss_sum, PSNR_sum = 0, 0
+
+    def test(self, X, Y):
+            loss_sum = 0
             for x, y in zip(X, Y):
                 x = x.reshape(1, -1)
                 y = y.reshape(1, -1)
 
                 y_pred = self.forward(x)
                 loss_sum += self.loss_fn.loss(y_pred, y)
-                
-                if PSNR:
-                    PSNR_sum += calculate_psnr(y, y_pred)
-            
-            if PSNR:
-                return (loss_sum/len(X), PSNR_sum/len(X))
-            else:
                 return loss_sum/len(X)
         
 
@@ -318,7 +318,7 @@ class MLP:
             network_architecture += f"  Layer {i+1:2}: {layer}"
             
         return (
-            f"Network Details:\n"
+            f"Multi-Layer Perceptron Details:\n"
             f"Input Size: {self.layers[0].shape[0]}\n"
             f"Output Size: {self.layers[-1].shape[-1]}\n"
             f"Architecture:\n{network_architecture}"
@@ -329,7 +329,6 @@ class MLP:
 
 
 def plot_metric_over_epoch(train_metric_list, test_metric_list=None, y_label="Mean Loss", figure_size=(8, 5)):
-
     plt.figure(figsize=figure_size)
 
     epochs = np.arange(1, len(train_metric_list) + 1)
