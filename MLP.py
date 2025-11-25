@@ -328,13 +328,14 @@ class MLP:
         )
 
 
-def plot_metric_over_epoch(train_metric_list, test_metric_list=None, title="", y_label="Mean Loss", figure_size=(8, 5)):
+def plot_metric_over_epoch(train_metric_list, test_metric_list=None, val=False, title="", y_label="Mean Loss", figure_size=(8, 5)):
     plt.figure(figsize=figure_size)
 
     epochs = np.arange(1, len(train_metric_list) + 1)
     plt.plot(epochs, train_metric_list, label='Train', linewidth=2)
     if test_metric_list is not None:
-        plt.plot(epochs, test_metric_list, color='salmon', label='Test', linewidth=2)
+        label = 'Validation' if val else 'Test' 
+        plt.plot(epochs, test_metric_list, color='salmon', label=label, linewidth=2)
 
     plt.xlabel('Epoch')
     plt.ylabel(y_label)
