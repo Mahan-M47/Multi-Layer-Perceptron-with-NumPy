@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm.notebook import tqdm
-import time
 
 GLOBAL_SEED = 24
 
@@ -129,17 +128,17 @@ class Softmax:
 # -------------------------
 class MSELoss:  # Do not use with Softmax activation!!
     def loss(self, y_pred, y_true):
-        return np.mean((y_pred - y_true)**2)
+        return np.mean((y_pred - y_true)**2)  # (1/N) ​(y^​_i​ − y_i​)^2
 
     def output_delta(self, y_pred, y_true, z, activation):
-        return (y_pred - y_true) * activation.derivative(z)  
+        return (y_pred - y_true) * activation.derivative(z)    # δ_i ​= ​(y^​_i​ − y_i​) f′(z_i​)
 
 
 class CrossEntropyLoss:  # Only use with Softmax activation!!
     def loss(self, y_pred, y_true):
         epsilon = 1e-15  # avoid log(0)
         y_pred = np.clip(y_pred, epsilon, 1. - epsilon)
-        return -np.mean(np.sum(y_true * np.log(y_pred), axis=1))  # np.mean is used if we're updating batch by batch
+        return -np.mean(np.sum(y_true * np.log(y_pred), axis=1))  # np.mean is useful if we're updating batch by batch
 
     def output_delta(self, y_pred, y_true, z, activation):  # activation should be Softmax
         if isinstance(activation, Softmax) == False:
@@ -211,8 +210,8 @@ class MLP:
             z = layer.forward(out)
             out = layer.activation.activate(z)
             
-            if grad:
-                self.z.append(z)
+            if grad:  # used for backpropagation
+                self.z.append(z)  
                 self.a.append(out)
         return out
 
@@ -256,7 +255,7 @@ class MLP:
         dW_acc = [dW / batch_size for dW in dW_acc]
         db_acc = [db / batch_size for db in db_acc]
 
-        # Update - if momentum = 0, this is just standard gradient descent
+        # Update weights - if momentum = 0, this is just standard gradient descent
         for i, layer in enumerate(self.layers):
             weight_update = - (self.lr * dW_acc[i] + self.momentum * layer.previous_weight_update)
             bias_update   = - (self.lr * db_acc[i] + self.momentum * layer.previous_bias_update)
@@ -273,7 +272,6 @@ class MLP:
     def train(self, X, Y, epochs=10, print_interval=2, batch_size=1, shuffle=False,
               test_model=False, X_test=None, Y_test=None):
         
-        start_time = time.time()  # Start timing the training process
         N = len(X)
         
         if shuffle:
@@ -286,7 +284,7 @@ class MLP:
                 end = start + batch_size
                 X_batch = X[start:end]
                 Y_batch = Y[start:end]                   
-                epoch_loss += self.backward(X_batch, Y_batch)  # find gradients after each batch and update weights
+                epoch_loss += self.backward(X_batch, Y_batch)  # find gradients for the sample ina each batch and update weights at the end
 
             train_loss = epoch_loss / N
             self.train_loss_list.append(train_loss)
@@ -300,11 +298,7 @@ class MLP:
                 if test_model:
                     print(f",   Test Loss: {test_loss:8f}", end='')
                 print()
-    
-        end_time = time.time()  # End timing the training process
-        total_time = end_time - start_time
-        print(f"Training completed in {total_time:.2f} seconds.")
-
+            
 
     def test(self, X, Y):
             loss_sum = 0
@@ -330,7 +324,7 @@ class MLP:
             f"Architecture:\n{network_architecture}"
             f"Learning Rate: {self.lr}\n"
             f"Momentum: {self.momentum}\n"
-            f"Weight Initialization Type: {self.initializer.weight_type}\n"
+            f"Weight Initialization Type: {self.initializer.weight_type}"
         )
 
 
