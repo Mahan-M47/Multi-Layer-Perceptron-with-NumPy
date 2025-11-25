@@ -179,8 +179,11 @@ class LinearLayer:
 # MLP with Delta-Based Backprop
 # -------------------------
 class MLP:
-    def __init__(self, layer_sizes, activations, existing_layers=[], loss="mse", lr=0.01, momentum=0.0, weight_type="xavier"):
-        self.layers = existing_layers  # for transfer learning or continuing training from existing layers
+    def __init__(self, layer_sizes, activations, existing_layers=None, loss="mse", lr=0.01, momentum=0.0, weight_type="xavier"):
+        if existing_layers is not None:
+            self.layers = existing_layers  # for transfer learning or continuing training from existing layers
+        else:
+            self.layers = []
         
         self.lr = lr
         self.momentum = momentum
@@ -319,7 +322,7 @@ class MLP:
         network_architecture = ""
         for i, layer in enumerate(self.layers):
             network_architecture += f"  Layer {i+1:2}: {layer}"
-            
+
         return (
             f"Multi-Layer Perceptron Details:\n"
             f"Input Size: {self.layers[0].shape[0]}\n"
