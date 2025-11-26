@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 from tqdm.notebook import tqdm
+
 
 GLOBAL_SEED = 24
 
@@ -216,16 +218,16 @@ class MLP:
         return out
 
 
-    def backward(self, batch_X, batch_Y):
+    def backward(self, X_batch, Y_batch):
         # gradient accumulators - these will store the sum of the gradients for each weight - dLoss/dW
         dW_acc = [np.zeros_like(layer.W) for layer in self.layers]
         db_acc = [np.zeros_like(layer.b) for layer in self.layers]
 
-        batch_size = len(batch_X)
+        batch_size = len(X_batch)
         batch_loss = 0
 
         # calculate gradients (dW) for each sample in batch and accumulate them
-        for x, y in zip(batch_X, batch_Y):
+        for x, y in zip(X_batch, Y_batch):
             x = x.reshape(1, -1)
             y = y.reshape(1, -1)
 
@@ -272,8 +274,8 @@ class MLP:
     def train(self, X, Y, epochs=10, print_interval=2, batch_size=1, shuffle=False,
               test_model=False, X_test=None, Y_test=None):
         
+        start_time = time.time()
         N = len(X)
-        
         if shuffle:
             X, Y = shuffle_data(X, Y)
         
@@ -283,7 +285,7 @@ class MLP:
             for start in range(0, N, batch_size):  # Loop over batches
                 end = start + batch_size
                 X_batch = X[start:end]
-                Y_batch = Y[start:end]                   
+                Y_batch = Y[start:end]                 
                 epoch_loss += self.backward(X_batch, Y_batch)  # find gradients for the sample ina each batch and update weights at the end
 
             train_loss = epoch_loss / N
@@ -298,6 +300,11 @@ class MLP:
                 if test_model:
                     print(f",   Test Loss: {test_loss:8f}", end='')
                 print()
+        
+        end_time = time.time()
+        total_seconds = end_time - start_time
+        print(f"\nTotal training time: {int(total_seconds // 60)} min {total_seconds % 60:0f} sec")
+
             
 
     def test(self, X, Y):
@@ -369,16 +376,6 @@ def plot_train_metrics(metric_lists, labels=None, title="", y_label="Mean Loss",
 
 
 def calculate_psnr(image1, image2):
-    """
-    Calculate the PSNR (Peak Signal-to-Noise Ratio) between two grayscale images.
-
-    Parameters:
-        image1 (numpy.ndarray): First image with values in [0, 1].
-        image2 (numpy.ndarray): Second image with values in [0, 1].
-
-    Returns:
-        float: PSNR value in decibels (dB).
-    """
     if image1.shape != image2.shape:
         raise ValueError("Input images must have the same dimensions.")
     
