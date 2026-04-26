@@ -6,7 +6,7 @@
 
 A modular, from‑scratch implementation of Multi‑Layer Perceptrons using only NumPy. This project provides a flexible framework for building, training, and evaluating custom neural networks, demonstrated through two practical applications: **image compression with autoencoders** and **feature extraction for classification**.
 
-The library implements core components including various activation functions, loss functions, weight initialization strategies, backpropagation with momentum, and batch training – all built without high‑level deep learning frameworks.
+The library implements core components including various activation functions, loss functions, weight initialization strategies, backpropagation with momentum, and batch training. All built without high‑level deep learning frameworks.
 
 ## 📌 Key Features
 
@@ -22,12 +22,12 @@ All components are implemented as modular classes, making it easy to extend or s
 ## 🏗️ Project Structure
 
 The core neural network implementation is contained in `MLP.py`, which includes:
-- `WeightInitializer` – handles different weight initialization schemes
-- Activation classes – `ReLU`, `LeakyReLU`, `Linear`, `Sigmoid`, `Tanh`, `Softmax`
-- Loss classes – `MSELoss`, `CrossEntropyLoss`
-- `LinearLayer` – single fully‑connected layer with weight/bias storage
-- `MLP` – main class supporting forward/backward passes, training, and evaluation
-- Utility functions – data shuffling, loss plotting, PSNR calculation
+- `WeightInitializer` - handles different weight initialization schemes
+- Activation classes - `ReLU`, `LeakyReLU`, `Linear`, `Sigmoid`, `Tanh`, `Softmax`
+- Loss classes - `MSELoss`, `CrossEntropyLoss`
+- `LinearLayer` - single fully‑connected layer with weight/bias storage
+- `MLP` - main class supporting forward/backward passes, training, and evaluation
+- Utility functions - data shuffling, loss plotting, PSNR calculation
 
 Two demonstration notebooks (`autoencoder.ipynb`, `classifier.ipynb`) show end‑to‑end usage for autoencoding image compression and classification tasks.
 
