@@ -1,4 +1,4 @@
-# Multi Layer Perceptron with Numpy
+# Multi Layer Perceptron with NumPy
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![NumPy](https://img.shields.io/badge/NumPy-2.3+-013243?logo=numpy&logoColor=white)](https://numpy.org/)
